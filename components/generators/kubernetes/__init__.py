@@ -442,6 +442,36 @@ class NameSpace(k8s.Base):
         self.add_annotations(annotations)
 
 
+"""
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: task-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+"""
+class PersistentVolume(k8s.Base, WorkloadCommon):
+    def new(self):
+        self.need('component')
+        self.kwargs.apiVersion = 'v1'
+        self.kwargs.kind = 'PersistentVolume'
+        super().new()
+
+    def body(self):
+        super().body()
+        component = self.kwargs.component
+
+        self.root.spec = component.persistent_volume
+
+
 class Deployment(k8s.Base, WorkloadCommon):
     def new(self):
         self.need('component')
@@ -1358,6 +1388,10 @@ def generate_component_manifests(input_params):
         if component.backend_config:
             backend_config = BackendConfig(name=name, component=component).root
             bundle_workload += [backend_config]
+
+        if component.persistent_volume:
+            persistent_volume = PersistentVolume(name=name, component=component).root
+            bundle_workload += [persistent_volume]
 
         if component.service_account.get('create', False):
             sa_name = component.service_account.get('name', name)

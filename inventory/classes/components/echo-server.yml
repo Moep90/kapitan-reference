@@ -77,6 +77,28 @@ parameters:
           path: /_ready
           timeout_seconds: 5
 
+      volumes:
+        data:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: mystorageclass
+            resources:
+              requests:
+                storage: 1Gi
+      persistent_volume:
+        capacity:
+          storage: 5Gi
+        volumeMode: Filesystem
+        accessModes:
+          - ReadWriteOnce
+        persistentVolumeReclaimPolicy: Recycle
+        storageClassName: slow
+        mountOptions:
+          - hard
+          - nfsvers=4.1
+        nfs:
+          path: /tmp
+          server: 172.17.0.2
       # Configs and Secrets definitions
       secrets:
         secret:

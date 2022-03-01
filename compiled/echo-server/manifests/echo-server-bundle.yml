@@ -90,6 +90,14 @@ spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
+        - name: data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+            storageClassName: mystorageclass
         - configMap:
             defaultMode: 550
             name: echo-server-caa935ba
@@ -98,3 +106,24 @@ spec:
           secret:
             defaultMode: 420
             secretName: echo-server
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 5Gi
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /tmp
+    server: 172.17.0.2
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow
+  volumeMode: Filesystem
