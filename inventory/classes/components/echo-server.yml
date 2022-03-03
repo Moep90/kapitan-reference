@@ -85,20 +85,23 @@ parameters:
             resources:
               requests:
                 storage: 1Gi
-      persistent_volume:
-        capacity:
-          storage: 5Gi
-        volumeMode: Filesystem
-        accessModes:
-          - ReadWriteOnce
-        persistentVolumeReclaimPolicy: Recycle
-        storageClassName: slow
-        mountOptions:
-          - hard
-          - nfsvers=4.1
-        nfs:
-          path: /tmp
-          server: 172.17.0.2
+            persistentVolumeProperties:
+              mountOptions:
+                - hard
+                - nfsvers=4.1
+              nfs:
+                path: /tmp
+                server: 172.17.0.2
+              persistentVolumeReclaimPolicy: Recycle
+              volumeMode: Filesystem
+        data2:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: mystorageclass
+            resources:
+              requests:
+                storage: 1Gi
+
       # Configs and Secrets definitions
       secrets:
         secret:

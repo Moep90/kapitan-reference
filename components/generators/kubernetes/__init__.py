@@ -53,6 +53,22 @@ class WorkloadCommon(BaseObj):
             merge({'metadata': {'name': key, 'labels': {'name': key}}}, value)
             self.root.spec.volumeClaimTemplates += [value]
 
+    def add_persistent_volumes(self, volumes):
+        for key, value in volumes.items():
+            res = {"capacity": {"storage": value.spec.resources.requests.storage},
+                   "storageClassName": value.spec.storageClassName,
+                   "accessModes": value.spec.accessModes}
+            res.update(value.spec.persistentVolumeProperties)
+            self.root.spec.template.spec.persistent_volumes += [res]
+
+    def add_persistent_volume_claims(self, volumes):
+        for key, value in volumes.items():
+            res = {"volumeName": key,
+                   "resources": {"requests": {"storage": value.spec.resources.requests.storage}},
+                   "storageClassName": value.spec.storageClassName,
+                   "accessModes": value.spec.accessModes}
+            self.root.spec.template.spec.persistent_volume_claims += [res]
+
     def add_volumes_for_objects(self, objects):
         for object in objects.root:
             object_name = object.name
@@ -441,37 +457,6 @@ class NameSpace(k8s.Base):
         self.add_labels(labels)
         self.add_annotations(annotations)
 
-
-"""
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: task-pv-volume
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/data"
-"""
-class PersistentVolume(k8s.Base, WorkloadCommon):
-    def new(self):
-        self.need('component')
-        self.kwargs.apiVersion = 'v1'
-        self.kwargs.kind = 'PersistentVolume'
-        super().new()
-
-    def body(self):
-        super().body()
-        component = self.kwargs.component
-
-        self.root.spec = component.persistent_volume
-
-
 class Deployment(k8s.Base, WorkloadCommon):
     def new(self):
         self.need('component')
@@ -779,6 +764,8 @@ class Workload(WorkloadCommon):
         workload.add_labels(component.get('labels', {}))
         workload.add_volumes(component.volumes)
         workload.add_volume_claims(component.volume_claims)
+        workload.add_persistent_volumes(component.volumes)
+        workload.add_persistent_volume_claims(component.volumes)
         workload.root.spec.template.spec.securityContext = component.workload_security_context
         workload.root.spec.minReadySeconds = component.min_ready_seconds
         if component.service_account.enabled:
@@ -1388,10 +1375,6 @@ def generate_component_manifests(input_params):
         if component.backend_config:
             backend_config = BackendConfig(name=name, component=component).root
             bundle_workload += [backend_config]
-
-        if component.persistent_volume:
-            persistent_volume = PersistentVolume(name=name, component=component).root
-            bundle_workload += [persistent_volume]
 
         if component.service_account.get('create', False):
             sa_name = component.service_account.get('name', name)
