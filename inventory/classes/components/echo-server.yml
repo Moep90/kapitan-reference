@@ -94,6 +94,8 @@ parameters:
                 server: 172.17.0.2
               persistentVolumeReclaimPolicy: Recycle
               volumeMode: Filesystem
+            persistentVolumeClaimProperties:
+              volumeMode: Filesystem
         data2:
           spec:
             accessModes: ["ReadWriteOnce"]

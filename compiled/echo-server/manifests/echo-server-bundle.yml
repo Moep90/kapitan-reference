@@ -87,40 +87,6 @@ spec:
           image: docker pull busybox
           imagePullPolicy: IfNotPresent
           name: busybox
-      persistent_volume_claims:
-        - accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 1Gi
-          storageClassName: mystorageclass
-          volumeName: data
-        - accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 1Gi
-          storageClassName: mystorageclass
-          volumeName: data2
-      persistent_volumes:
-        - accessModes:
-            - ReadWriteOnce
-          capacity:
-            storage: 1Gi
-          mountOptions:
-            - hard
-            - nfsvers=4.1
-          nfs:
-            path: /tmp
-            server: 172.17.0.2
-          persistentVolumeReclaimPolicy: Recycle
-          storageClassName: mystorageclass
-          volumeMode: Filesystem
-        - accessModes:
-            - ReadWriteOnce
-          capacity:
-            storage: 1Gi
-          storageClassName: mystorageclass
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       volumes:
@@ -128,6 +94,8 @@ spec:
           spec:
             accessModes:
               - ReadWriteOnce
+            persistentVolumeClaimProperties:
+              volumeMode: Filesystem
             persistentVolumeProperties:
               mountOptions:
                 - hard
@@ -157,3 +125,68 @@ spec:
           secret:
             defaultMode: 420
             secretName: echo-server
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /tmp
+    server: 172.17.0.2
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: mystorageclass
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    name: data
+  name: data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: mystorageclass
+  volumeMode: Filesystem
+  volumeName: data
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    name: echo-server
+  name: echo-server
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  storageClassName: mystorageclass
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    name: data2
+  name: data2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: mystorageclass
+  volumeName: data2
